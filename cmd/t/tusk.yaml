@@ -1,0 +1,32 @@
+---
+interpreter: go run mvdan.cc/sh/v3/cmd/gosh@v3.5.1 -c
+
+tasks:
+  cli:
+    args:
+      program-name:
+        values:
+          - yq3
+          - yq4
+          - tusk
+          - gosh
+          - oras
+          - kind
+          - gum
+    options:
+      command:
+        short: c
+    run:
+      - task:
+          name: cli-${program-name}
+          options:
+            command: ${command}
+
+  cli-kind:
+    options:
+      command:
+        short: c
+    run:
+      - go run sigs.k8s.io/kind@v0.17.0 ${command}
+
+# https://github.com/harness/drone-cli
