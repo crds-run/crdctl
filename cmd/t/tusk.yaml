@@ -34,10 +34,59 @@ tasks:
         short: c
     run:
       - task:
-          name: cli-run
+          name: cli-${program-name}
           options:
-            program: ${program-name}
             command: ${command}
+
+  
+  cli-yq3:
+    options:
+      command:
+        short: c
+    run:
+      - ${yq3} ${command}
+
+  cli-yq4:
+    options:
+      command:
+        short: c
+    run:
+      - ${yq4} ${command}
+
+  cli-tusk:
+    options:
+      command:
+        short: c
+    run:
+      - ${tusk} ${command}
+
+  cli-gosh:
+    options:
+      command:
+        short: c
+    run:
+      - ${gosh} ${command}
+
+  cli-oras:
+    options:
+      command:
+        short: c
+    run:
+      - ${oras} ${command}
+
+  cli-kind:
+    options:
+      command:
+        short: c
+    run:
+      - ${kind} ${command}
+
+  cli-gum:
+    options:
+      command:
+        short: c
+    run:
+      - ${gum} ${command}
 
   cli-run:
     options:

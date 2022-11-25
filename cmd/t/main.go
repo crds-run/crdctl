@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strings"
 )
 
 //go:embed tusk.yaml
@@ -40,9 +41,8 @@ func main() {
 	// check(err)
 
 	content1, _ := folder.ReadFile("embed/init.sh")
-	// print(string(content1))
 	shell(string(content1))
-	shell("lolcat " + f.Name())
+	shell("go run github.com/rliebz/tusk@v0.6.4 --file " + f.Name() + " " + strings.Join(os.Args[1:], " "))
 	defer os.Remove(f.Name())
 
 	// content2, _ := folder.ReadFile("tusk.yaml")
