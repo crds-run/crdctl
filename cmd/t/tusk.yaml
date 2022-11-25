@@ -1,6 +1,22 @@
 ---
 interpreter: go run mvdan.cc/sh/v3/cmd/gosh@v3.5.1 -c
 
+options:
+  tusk:
+    default: go run github.com/rliebz/tusk@v0.6.4
+  yq3:
+    default: go run github.com/mikefarah/yq/v3@3.4.1
+  yq4:
+    default: go run github.com/mikefarah/yq/v4@latest
+  gosh:
+    default: go run mvdan.cc/sh/v3/cmd/gosh@v3.5.1
+  oras:
+    default: go run oras.land/oras/cmd/oras@v0.16.0
+  kind:
+    default: go run sigs.k8s.io/kind@v0.17.0
+  gum:
+    default: go run github.com/charmbracelet/gum@latest
+
 tasks:
   cli:
     args:
@@ -18,15 +34,19 @@ tasks:
         short: c
     run:
       - task:
-          name: cli-${program-name}
+          name: cli-run
           options:
+            program: ${program-name}
             command: ${command}
 
-  cli-kind:
+  cli-run:
     options:
+      program:
+        required: true
+      bin:
+        default:
+          command: cat tusk.yaml | ${yq3} r - 'options.${program}.default'
       command:
         short: c
     run:
-      - go run sigs.k8s.io/kind@v0.17.0 ${command}
-
-# https://github.com/harness/drone-cli
+      - ${bin} ${command}
