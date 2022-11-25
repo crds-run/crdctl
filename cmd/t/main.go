@@ -1,14 +1,12 @@
 package main
 
 import (
+	"embed"
 	"fmt"
 	"os"
-	"path/filepath"
-	"embed"
-	
+	"os/exec"
 )
 
-	
 //go:embed tusk.yaml
 var fileByte []byte
 
@@ -26,30 +24,41 @@ func main() {
 	f, err := os.CreateTemp("", "sample")
 	check(err)
 
-	fmt.Println("Temp file name:", f.Name())
+	_, err = f.Write(fileByte)
+	check(err)
 
+	// fmt.Println(f.Name())
+
+	// dname, err := os.MkdirTemp("", "sampledir")
+	// check(err)
+	// fmt.Println("Temp dir name:", dname)
+
+	// defer os.RemoveAll(dname)
+
+	// fname := filepath.Join(dname, "file1")
+	// err = os.WriteFile(fname, fileByte, 0777)
+	// check(err)
+
+	content1, _ := folder.ReadFile("embed/init.sh")
+	// print(string(content1))
+	shell(string(content1))
+	shell("lolcat " + f.Name())
 	defer os.Remove(f.Name())
 
-	_, err = f.Write([]byte{1, 2, 3, 4})
-	check(err)
+	// content2, _ := folder.ReadFile("tusk.yaml")
+	// print(string(content2))
 
-	dname, err := os.MkdirTemp("", "sampledir")
-	check(err)
-	fmt.Println("Temp dir name:", dname)
+	// print(string(fileByte))
+}
 
-	defer os.RemoveAll(dname)
-
-	fname := filepath.Join(dname, "file1")
-	err = os.WriteFile(fname, []byte{1, 2}, 0666)
-	check(err)
-
-
-	
-	content1, _ := folder.ReadFile("embed/ok.yaml")
-	print(string(content1))
-	
-	content2, _ := folder.ReadFile("tusk.yaml")
-	print(string(content2))
-	
-	print(string(fileByte))
+func shell(theargs string) {
+	// cmd := exec.Command(os.Getenv("SHELL"), "-c", " "+theargs)
+	cmd := exec.Command("go", "run", "mvdan.cc/sh/v3/cmd/gosh@v3.5.1", "-c", " "+theargs)
+	cmd.Stdout = os.Stdout
+	cmd.Stdin = os.Stdin
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		// os.Exit(1)
+	}
 }
