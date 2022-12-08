@@ -16,8 +16,26 @@ options:
     default: go run sigs.k8s.io/kind@v0.17.0
   gum:
     default: go run github.com/charmbracelet/gum@latest
+  gum-dev:
+    default: go run github.com/charmbracelet/gum@b8dbcc3
 
 tasks:
+  pathctl:
+    usage: manage PATH
+    options:
+      add-path:
+        short: a
+      remove-path:
+        short: r
+      list:
+        short: l
+    run:
+      - ${gum-dev} choose list init create edit delete
+      - echo $PATH | tr ':' '\n'
+      - set-environment:
+          ADD_PATH: $(${gum-dev} go run github.com/charmbracelet/gum@b8dbcc3 file --directory ~)
+
+
   cli:
     args:
       program-name:

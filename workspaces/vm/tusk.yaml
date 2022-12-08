@@ -1,0 +1,191 @@
+#!/usr/bin/env -S go run github.com/rliebz/tusk@latest --file
+---
+interpreter: go run mvdan.cc/sh/v3/cmd/gosh@latest -c
+
+options:
+  lolcat:
+    default: go run github.com/UltiRequiem/chigo@latest
+  go-getter:
+    default: go run github.com/hashicorp/go-getter/cmd/go-getter@latest
+  kapp:
+    default: go run github.com/vmware-tanzu/carvel-kapp/cmd/kapp@v0.54.1
+
+tasks:
+  manifests:
+    run:
+      - kubectl get crd --no-headers | gum filter --no-limit | cut -d ' ' -f 1 | while read crd; do echo "---"; kubectl creyaml $crd | yq; done
+  
+  k9s:
+    run:
+      - ${go-getter} -mode dir -progress 'github.com/derailed/k9s?ref=v0.26.7' ~/go/src/github.com/derailed/k9s
+      - tree ~/go/src/github.com/derailed/k9s
+      - command:
+          dir: /home/chad/go/src/github.com/derailed/k9s
+          exec: go run . --headless
+
+  ssh:
+    options:
+      vm:
+        short: v
+      user-name:
+        default:
+          command: whoami
+      user-key:
+        default:
+          command: cat ~/.ssh/*.pub
+    run:
+      - kubectl virt ssh --local-ssh=true ${user-name}@${vm}
+
+  vnc:
+    options:
+      vm:
+        short: v
+    run:
+      - kubectl virt vnc ${vm}
+
+  launch:
+    options:
+      name:
+        short: 'n'
+        required: true
+      cpus:
+        short: 'c'
+        default: 2
+      memory:
+        short: 'm'
+        default: 4G
+      image:
+        short: i
+        default: docker.io/chadmoon/kubevirt-ubuntu-2004-kubeadm:v1.22.9
+      user-name:
+        default:
+          command: whoami
+      user-key:
+        default:
+          command: cat ~/.ssh/*.pub
+    run:
+      - |
+          cat <<------- | cat > /tmp/${name}.yaml
+          ---
+          apiVersion: kubevirt.io/v1alpha3
+          kind: VirtualMachineInstance
+          metadata:
+            name: ${name}
+          spec:
+            domain:
+              cpu:
+                cores: ${cpus}
+              resources:
+                requests:
+                  memory: ${memory}
+              devices:
+                disks:
+                - name: containerdisk
+                  disk:
+                    bus: virtio
+                - disk:
+                    bus: virtio
+                  name: cloudinitdisk
+            volumes:
+            - name: containerdisk
+              containerDisk:
+                image: ${image}
+            - name: cloudinitdisk
+              cloudInitNoCloud:
+                userData: |-
+                  #cloud-config
+                  chpasswd:
+                    list: |
+                      root:root
+                    expire: False
+                  disable_root: false
+                  users:
+                    - default
+                    - name: ${user-name}
+                      sudo: ALL=(ALL) NOPASSWD:ALL
+                      lock_passwd: false
+                      ssh_authorized_keys:
+                        - ${user-key}
+                  runcmd:
+                    - apt-get update
+                    - apt-get install -y neofetch
+                    - neofetch > /etc/motd
+          ------
+      - cat /tmp/${name}.yaml | yq
+      - gum confirm "Deploy Manifest?" --timeout 5s --affirmative="deploy" --negative="edit" && echo 'deploying...' || micro /tmp/${name}.yaml
+      - sleep 2
+      - ${kapp} delete -a ${name} --wait --yes
+      - ${kapp} deploy -a ${name} -f /tmp/${name}.yaml --yes
+      - ${kapp} list
+
+
+  table:
+    run:
+      - |
+          kubectl get pods -A -o custom-columns-file=<(cat <<-------
+          NAME          RSRC
+          metadata.name metadata.resourceVersion
+          ------
+          ) | gum table
+
+
+  markdown:
+    run:
+      - |
+          gum format --type markdown --theme dracula <<-'------'
+          # foo
+
+          ## bar
+
+          ### zing
+
+          #### zang
+
+          ##### bang
+
+          ###### ding
+
+          ```
+          bang
+          ding
+          ow
+          ```
+          > ok cool
+          ------
+      - echo '*ubuntu* `22.04` kinetic kygolin' | gum format --type markdown --theme dracula
+      - echo '{{ Bold "Tasty" }} {{ Italic "Bubble" }} {{ Color "99" "0" " Gum " }}' | gum format --type template
+
+  build:
+    options:
+      platform:
+        default: choose
+    run:
+
+      - when:
+          # # (OS is linux OR darwin OR ignore OS is true) AND (verbose is true)
+          # - os:
+          #     - linux
+          #     - darwin
+          #   equal: {ignore-os: true}
+          - equal:
+              platform: choose
+        command: go tool dist list | while read dist; do yq3 n '[+].PLATFORM' $dist | yq3 w - '*.OPERATING-SYSTEM' $(echo $dist | cut -d '/' -f 1) | yq3 w - '*.ARCHITECTURE' "$(echo $dist | cut -d '/' -f 2)" ; done | yq -o json | yq -o csv | gum filter
+
+      # - when:
+      #     equals:
+      #       - platform: choose
+      #   command:
+      #     exec: go tool dist list | while read dist; do yq3 n '[+].PLATFORM' $dist | yq3 w - '*.OPERATING-SYSTEM' $(echo $dist | cut -d '/' -f 1) | yq3 w - '*.ARCHITECTURE' "$(echo $dist | cut -d '/' -f 2)" ; done | yq -o json | yq -o csv | gum table -w 15 --height 30 | cut -d ',' -f 1
+      # - when:
+      #     not-equal:
+      #       platform: choose
+      #     command:
+      #       exec: go tool dist list | while read dist; do yq3 n '[+].PLATFORM' $dist | yq3 w - '*.OPERATING-SYSTEM' $(echo $dist | cut -d '/' -f 1) | yq3 w - '*.ARCHITECTURE' "$(echo $dist | cut -d '/' -f 2)" ; done | yq -o json | yq -o csv | gum filter
+      # - go tool dist list
+      # - go tool dist list -json | yq -o csv 
+      # - go tool dist list -json
+      # - go tool dist list -json | yq
+      # - go tool dist list | while read dist; do echo $dist | ${lolcat}; done
+      # - yq3 n '[+].dist' DISTRIBUTION | yq3 w - '[0].os' 'OPERATING-SYSTEM' | yq3 w - '[0].arch' ARCHITECTURE | yq -o csv
+      
+      - go tool dist list | while read dist; do yq3 n '[+].PLATFORM' $dist | yq3 w - '*.OPERATING-SYSTEM' $(echo $dist | cut -d '/' -f 1) | yq3 w - '*.ARCHITECTURE' "$(echo $dist | cut -d '/' -f 2)" ; done | yq -o json | yq -o csv | gum table -w 15 --height 30 | cut -d ',' -f 1

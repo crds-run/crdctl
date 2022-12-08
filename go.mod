@@ -4,16 +4,21 @@ go 1.19
 
 require (
 	github.com/alecthomas/kong v0.6.1
+	github.com/fatih/color v1.13.0
+	github.com/google/go-cmp v0.5.5
 	github.com/mikefarah/yq/v3 v3.0.0-20201202084205-8846255d1c37
 	github.com/mikefarah/yq/v4 v4.30.4
+	github.com/urfave/cli v1.22.10
+	gopkg.in/yaml.v2 v2.4.0
+	gotest.tools/v3 v3.4.0
 )
 
 require (
 	github.com/a8m/envsubst v1.3.0 // indirect
 	github.com/alecthomas/participle/v2 v2.0.0-beta.5 // indirect
+	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
 	github.com/dimchansky/utfbom v1.1.1 // indirect
 	github.com/elliotchance/orderedmap v1.5.0 // indirect
-	github.com/fatih/color v1.13.0 // indirect
 	github.com/goccy/go-json v0.9.11 // indirect
 	github.com/goccy/go-yaml v1.9.6 // indirect
 	github.com/inconshreveable/mousetrap v1.0.1 // indirect
@@ -23,6 +28,7 @@ require (
 	github.com/mattn/go-colorable v0.1.12 // indirect
 	github.com/mattn/go-isatty v0.0.16 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
+	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/spf13/cobra v1.6.1 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/stretchr/testify v1.8.0 // indirect
